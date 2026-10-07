@@ -1,0 +1,28 @@
+Holoscan Camera
+Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+This product includes software developed at NVIDIA CORPORATION (https://www.nvidia.com/).
+
+Holoscan Camera uses the following open source software. None of these components are vendored in this repository. Versions for DLPack and FlatBuffers are those recorded for Holoscan SDK 5; this module uses the copies provided by the SDK it links.
+
+DLPack (https://github.com/dmlc/dlpack)
+Version 1.3, as provided by Holoscan SDK.
+Licensed under Apache-2.0 (https://github.com/dmlc/dlpack/blob/v1.3/LICENSE)
+Public headers include <dlpack/dlpack.h> from the SDK. This package does not redistribute DLPack source or binaries.
+
+FlatBuffers (https://github.com/google/flatbuffers)
+Copyright 2014 Google Inc. All rights reserved.
+Version 25.12.19, as provided by Holoscan SDK.
+Licensed under Apache-2.0 (https://github.com/google/flatbuffers/blob/v25.12.19/LICENSE)
+The SDK flatc tool generates schema headers that this package installs. The FlatBuffers runtime is linked through the Holoscan SDK (holoscan::schema) and is not copied into this package.
+
+Linux kernel UAPI header linux/videodev2.h (https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/videodev2.h)
+Copyright (C) 1999-2012 the contributors
+SPDX-License-Identifier: ((GPL-2.0+ WITH Linux-syscall-note) OR BSD-3-Clause)
+This module elects the BSD-3-Clause terms (https://opensource.org/license/BSD-3-Clause).
+V4l2CaptureOp compiles against the system header for Video4Linux ioctl calls. The header is not installed or otherwise redistributed.
+
+GoogleTest (https://github.com/google/googletest)
+Copyright 2008, Google Inc. All rights reserved.
+Licensed under BSD-3-Clause (https://github.com/google/googletest/blob/v1.17.0/LICENSE)
+Used only to build and run unit tests (libgtest-dev). It is not installed by the holoscan-camera package. The development image does not pin the package version; the license link above is the Holoscan SDK's recorded GoogleTest license.
