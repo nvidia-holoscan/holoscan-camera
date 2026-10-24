@@ -1,0 +1,15 @@
+# Nanobind native classes use nanobind.nb_type, which stubtest reports as an unmodelled
+# metaclass/disjoint-base difference; Python Operators inherit it from holoscan.Operator.
+# Nanobind enums also expose a private __nb_enum__ implementation capsule that is intentionally
+# absent from the public stubs, and native callables use nanobind.nb_func rather than
+# types.FunctionType, so the generated signatures remain authoritative.
+holoscan_camera._sipl.BayerFormat.__nb_enum__
+holoscan_camera._sipl.CameraInfo
+holoscan_camera._sipl.PixelFormat.__nb_enum__
+holoscan_camera._sipl.SIPLCaptureService
+holoscan_camera._sipl.SIPLCaptureService.__new__
+holoscan_camera._sipl.SIPLCaptureService.list_available_configs
+holoscan_camera.operators.converters.Nv12ToRgbOp
+holoscan_camera.operators.converters.Raw10UnpackOp
+# The converters need CuPy, which the provider does not: without it, stubtest cannot import them.
+holoscan_camera.operators.converters

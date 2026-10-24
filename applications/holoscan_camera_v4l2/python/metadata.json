@@ -1,0 +1,54 @@
+{
+    "$schema": "urn:holohub:application:v1",
+    "application": {
+        "name": "holoscan_camera_v4l2",
+        "authors": [
+            {
+                "name": "Holoscan Team",
+                "affiliation": "NVIDIA"
+            }
+        ],
+        "description": "Python graph using the native V4L2 operator to capture typed Image samples",
+        "language": "Python",
+        "version": "0.1.0",
+        "changelog": {
+            "0.1.0": "SDK 5 Python graph validation, live YUYV capture, and Holoviz preview through V4l2CaptureOp"
+        },
+        "holoscan_sdk": {
+            "minimum_required_version": "5.0.0",
+            "tested_versions": ["5.0.0"]
+        },
+        "platforms": ["x86_64", "aarch64"],
+        "tags": ["Camera", "V4L2", "Sensor IO", "Python"],
+        "ranking": 3,
+        "requirements": {
+            "python": "CPython 3.12 or newer with matching Holoscan SDK 5 Python bindings and nanobind 3.0.1",
+            "linux": "V4L2 capture device exposing a YUYV mode for live capture",
+            "preview": "Matching Holoscan Visualization Python bindings, NumPy, and a compatible NVIDIA GPU and graphical display"
+        },
+        "default_mode": "validate",
+        "modes": {
+            "validate": {
+                "description": "Compile the Python V4L2 graph without opening a camera",
+                "run": {
+                    "command": "bash \"<holohub_root>/python/run_sample.sh\" \"<holohub_root>/applications/holoscan_camera_v4l2/python/v4l2_capture.py\" --validate",
+                    "workdir": "holohub_root"
+                }
+            },
+            "capture": {
+                "description": "Capture 120 YUYV frames from /dev/video0 with a Python consumer",
+                "run": {
+                    "command": "bash \"<holohub_root>/python/run_sample.sh\" \"<holohub_root>/applications/holoscan_camera_v4l2/python/v4l2_capture.py\"",
+                    "workdir": "holohub_root"
+                }
+            },
+            "preview": {
+                "description": "Show captured frames until the preview window closes",
+                "run": {
+                    "command": "bash \"<holohub_root>/python/run_sample.sh\" \"<holohub_root>/applications/holoscan_camera_v4l2/python/v4l2_capture.py\" --preview --frames 0 --timeout 0",
+                    "workdir": "holohub_root"
+                }
+            }
+        }
+    }
+}

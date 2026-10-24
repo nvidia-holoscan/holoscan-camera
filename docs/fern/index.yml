@@ -1,0 +1,49 @@
+navigation:
+  - page: Overview
+    path: ../../README.md
+    slug: overview
+  - page: Python Support
+    path: ../../python/README.md
+    slug: python-support
+  - section: Operators
+    slug: operators
+    skip-slug: true
+    contents:
+      - page: V4L2 Capture Operator
+        path: ../../operators/v4l2_capture_op/README.md
+        slug: v4l2-capture
+      - page: SIPL Capture Operator
+        path: ../../operators/sipl_capture_op/README.md
+        slug: sipl-capture
+      - page: Argus Capture Operator
+        path: ../../operators/argus_capture_op/README.md
+        slug: argus-capture
+  - section: Applications
+    slug: applications
+    skip-slug: true
+    contents:
+      - page: V4L2 Application
+        path: ../../applications/holoscan_camera_v4l2/README.md
+        slug: v4l2-application
+      - page: V4L2 Python Application
+        path: ../../applications/holoscan_camera_v4l2/python/README.md
+        slug: v4l2-python-application
+      - page: Argus Application
+        path: ../../applications/holoscan_camera_argus/README.md
+        slug: argus-application
+      - page: SIPL Frame Saver Application
+        path: ../../applications/sipl_frame_saver/README.md
+        slug: sipl-frame-saver
+      - page: SIPL Stereo Monitor Application
+        path: ../../applications/sipl_stereo_monitor/README.md
+        slug: sipl-stereo-monitor
+  - section: Benchmarks
+    slug: benchmarks
+    skip-slug: true
+    contents:
+      - page: V4L2 Benchmarks
+        path: ../../operators/v4l2_capture_op/benchmarks.md
+        slug: v4l2-benchmarks
+      - page: SIPL Benchmarks
+        path: ../../operators/sipl_capture_op/benchmarks.md
+        slug: sipl-benchmarks

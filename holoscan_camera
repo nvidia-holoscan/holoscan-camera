@@ -1,0 +1,244 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Holoscan Camera CLI wrapper.
+# Delegates to the standalone `holoscan-cli` package with module-specific
+# defaults in pyproject.toml and a pinned prerelease from NVIDIA PyPI.
+#
+# Usage:
+#   ./holoscan_camera run-container
+#   ./holoscan_camera build holoscan_camera_v4l2
+#   ./holoscan_camera run   holoscan_camera_v4l2 --language cpp
+#   ./holoscan_camera test  holoscan_camera_v4l2
+#   ./holoscan_camera package holoscan-camera --pkg-generator DEB,TGZ
+#   ./holoscan_camera --help
+#
+# Optional overrides (rarely needed):
+#   HOLOSCAN_SDK_INSTALL_DIR  Absolute path to an installed Holoscan SDK.
+#   HOLOSCAN_SDK_ROOT         SDK install directory or parent containing one.
+#   HOLOSCAN_CAMERA_SIPL_SOURCE_DIR  Matching SIPL source tree for IGX R38.5
+#                             (experimental, unsupported SIPL source builds).
+#   HOLOSCAN_CLI_SOURCE   Local checkout — wins over the package install.
+#   HOLOSCAN_CLI_INSTALL_ARGS  Pip install arguments.
+#   HOLOSCAN_CLI_PYTHON_BIN  Caller-owned Python 3.11+ interpreter.
+#   HOLOSCAN_CLI_VENV         Wrapper-managed venv location.
+
+set -euo pipefail
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Project naming, CUDA, CTest, and base images live in pyproject.toml.
+export HOLOSCAN_CLI_ROOT="${HOLOSCAN_CLI_ROOT:-${SCRIPT_DIR}}"
+export HOLOSCAN_CLI_CMD_NAME="${HOLOSCAN_CLI_CMD_NAME:-${BASH_SOURCE[0]}}"
+# Preserve exact caller-supplied base images, including untagged references.
+export HOLOSCAN_CLI_DEFAULT_DOCKERFILE="${HOLOSCAN_CLI_DEFAULT_DOCKERFILE:-${SCRIPT_DIR}/Dockerfile}"
+# Use the published Holoscan SDK 5.0 container image by default.
+export HOLOSCAN_CLI_BASE_IMAGE="${HOLOSCAN_CLI_BASE_IMAGE:-nvcr.io/nvidia/clara-holoscan/holoscan:v5.0.0-cuda13}"
+export HOLOSCAN_CLI_BASE_IMAGE_FORMAT="${HOLOSCAN_CLI_BASE_IMAGE_FORMAT:-"{base_image}"}"
+
+# Retain the legacy SDK variable; CLI 5 owns SDK discovery and CMake paths.
+if [[ -n "${HOLOSCAN_SDK_INSTALL_DIR:-}" ]]; then
+    export HOLOSCAN_SDK_ROOT="${HOLOSCAN_SDK_INSTALL_DIR}"
+fi
+
+# ==============================================================================
+# holoscan-cli bootstrap + exec
+# ==============================================================================
+
+export HOLOSCAN_CLI_INSTALL_ARGS="${HOLOSCAN_CLI_INSTALL_ARGS:-}"
+CLI_REQUIREMENTS="${SCRIPT_DIR}/requirements-cli.txt"
+read -r -a CLI_INSTALL_ARGS <<< "${HOLOSCAN_CLI_INSTALL_ARGS}"
+CLI_VENV_EXPLICIT="${HOLOSCAN_CLI_VENV:+1}"
+if [[ -z "${HOLOSCAN_CLI_VENV:-}" && -n "${XDG_DATA_HOME:-}${HOME:-}" ]]; then
+    HOLOSCAN_CLI_VENV="${XDG_DATA_HOME:-${HOME}/.local/share}/holoscan-cli/venv"
+fi
+export HOLOSCAN_CLI_VENV="${HOLOSCAN_CLI_VENV:-}"
+
+if [[ -n "${HOLOSCAN_CLI_SOURCE:-}" ]]; then
+    export PYTHONPATH="${HOLOSCAN_CLI_SOURCE%/}/src${PYTHONPATH:+:${PYTHONPATH}}"
+fi
+
+_cli_ok() {
+    "$1" -c 'import holoscan_cli.project_context, cookiecutter, jsonschema, referencing' 2>/dev/null
+}
+# CLI 5 requires Python 3.11+. Name the interpreter and the fix rather than
+# leaving pip to report an unsatisfiable requirement.
+_require_python() {
+    local version
+    if version="$("$1" -c 'import platform, sys; print(platform.python_version()); sys.exit(sys.version_info < (3, 11))' 2>/dev/null)"; then
+        return
+    fi
+    echo "[holoscan_camera] Holoscan CLI 5 requires Python 3.11 or newer;" \
+         "$1 is ${version:-not runnable}." "${@:2}" >&2
+    exit 1
+}
+_is_container() {
+    [[ -f /.dockerenv || -f /run/.containerenv || -f /run/systemd/container ]] ||
+        grep -Eq '(docker|containerd|kubepods|podman|buildkit)' /proc/1/cgroup 2>/dev/null
+}
+_managed_venv_ready() {
+    [[ -n "${HOLOSCAN_CLI_VENV}" && -x "${HOLOSCAN_CLI_VENV}/bin/python" ]] &&
+        "${HOLOSCAN_CLI_VENV}/bin/python" -m pip --version >/dev/null 2>&1
+}
+_use_managed_venv() {
+    if [[ -z "${HOLOSCAN_CLI_VENV}" ]]; then
+        echo "[holoscan_camera] Set HOME, XDG_DATA_HOME, or HOLOSCAN_CLI_VENV." >&2
+        exit 1
+    fi
+    _require_python python3 "Create the wrapper venv with a newer interpreter, for example:" \
+        "python3.12 -m venv ${HOLOSCAN_CLI_VENV}"
+    if ! python3 -m venv "${HOLOSCAN_CLI_VENV}"; then
+        echo "[holoscan_camera] Could not create ${HOLOSCAN_CLI_VENV}; install python3-venv." >&2
+        exit 1
+    fi
+    PYTHON_BIN="${HOLOSCAN_CLI_VENV}/bin/python"
+}
+
+CLI_INSTALL_REQUIRED=true
+PYTHON_HINT="Set HOLOSCAN_CLI_PYTHON_BIN or activate a virtual environment with Python 3.11+."
+PYTHON_BIN="${HOLOSCAN_CLI_PYTHON_BIN:-${VIRTUAL_ENV:+$VIRTUAL_ENV/bin/python}}"
+if [[ -z "${PYTHON_BIN}" ]]; then
+    unset PYTHONHOME
+fi
+if [[ -n "${PYTHON_BIN}" ]]; then
+    :
+elif [[ "${EUID}" -eq 0 ]] && _is_container; then
+    PYTHON_BIN="python3"
+    export PIP_BREAK_SYSTEM_PACKAGES="${PIP_BREAK_SYSTEM_PACKAGES:-1}"
+elif _managed_venv_ready; then
+    PYTHON_BIN="${HOLOSCAN_CLI_VENV}/bin/python"
+    # A venv created for an earlier CLI can predate the Python requirement.
+    PYTHON_HINT="Recreate the wrapper venv with a newer interpreter, for example: python3.12 -m venv --clear ${HOLOSCAN_CLI_VENV}"
+elif [[ -n "${CLI_VENV_EXPLICIT}" ]]; then
+    _use_managed_venv
+elif _is_container && [[ -z "${HOLOSCAN_CLI_SOURCE:-}" ]] && _cli_ok python3; then
+    PYTHON_BIN="python3"
+    # The image build installs requirements-cli.txt. Runtime users consume
+    # that environment without trying to modify the container's system Python.
+    CLI_INSTALL_REQUIRED=false
+elif _is_container; then
+    echo "[holoscan_camera] This container lacks CLI 5 project support or its dependencies; rebuild the image." >&2
+    exit 1
+else
+    _use_managed_venv
+fi
+_require_python "${PYTHON_BIN}" "${PYTHON_HINT}"
+
+if [[ "${CLI_INSTALL_REQUIRED}" == true ]] &&
+    { [[ -z "${HOLOSCAN_CLI_SOURCE:-}" ]] || ! _cli_ok "${PYTHON_BIN}"; }; then
+    if ! "${PYTHON_BIN}" -m pip --version >/dev/null 2>&1; then
+        "${PYTHON_BIN}" -m ensurepip --upgrade >/dev/null 2>&1 || {
+            echo "[holoscan_camera] ${PYTHON_BIN} has no pip and ensurepip is unavailable;" \
+                 "install pip or set HOLOSCAN_CLI_PYTHON_BIN to an interpreter that has it" \
+                 "and retry" >&2
+            exit 1
+        }
+    fi
+    if [[ -n "${HOLOSCAN_CLI_SOURCE:-}" ]]; then
+        echo "[holoscan_camera] installing holoscan-cli from ${HOLOSCAN_CLI_SOURCE}" >&2
+        "${PYTHON_BIN}" -m pip install --upgrade "${CLI_INSTALL_ARGS[@]}" "${HOLOSCAN_CLI_SOURCE%/}[create]" >&2
+    else
+        # Let pip enforce the pin and dependencies without parsing the file.
+        # Keep stdout reserved for the CLI, including its JSON output.
+        "${PYTHON_BIN}" -m pip install --quiet --disable-pip-version-check \
+            "${CLI_INSTALL_ARGS[@]}" -r "${CLI_REQUIREMENTS}" >&2 || {
+            _is_container && echo "[holoscan_camera] Install failed in this" \
+                "container; rebuild the image (./holoscan_camera build-container)." >&2
+            exit 1
+        }
+    fi
+fi
+
+CLI_ARGS=("$@")
+
+_append_docker_opts() {
+    local options="$1"
+    local index value
+
+    for ((index = 0; index < ${#CLI_ARGS[@]}; index++)); do
+        case "${CLI_ARGS[index]}" in
+            --)
+                CLI_ARGS=("${CLI_ARGS[@]:0:index}" "--docker-opts=${options}"
+                          "${CLI_ARGS[@]:index}")
+                return
+                ;;
+            --docker-opts)
+                value="${CLI_ARGS[index + 1]:-}"
+                CLI_ARGS[index + 1]="${value:+${value} }${options}"
+                return
+                ;;
+            --docker-opts=*)
+                value="${CLI_ARGS[index]#--docker-opts=}"
+                CLI_ARGS[index]="--docker-opts=${value:+${value} }${options}"
+                return
+                ;;
+        esac
+    done
+
+    CLI_ARGS+=("--docker-opts=${options}")
+}
+
+_l4t_version=""
+# Jetson builds default to the host BSP release for supported camera
+# development files. CLI 5 composes these defaults with other Docker options;
+# caller-provided environment arguments and --build-args follow this fallback
+# and can override it.
+if [[ -f /etc/nv_tegra_release ]]; then
+    _l4t_version="$(sed -nE \
+        '1s/^# R([0-9]+).*REVISION:[[:space:]]*([0-9]+\.[0-9]+).*/\1.\2/p' \
+        /etc/nv_tegra_release)"
+    if [[ -n "${_l4t_version}" ]]; then
+        export HOLOSCAN_CLI_DEFAULT_DOCKER_BUILD_ARGS="--build-arg L4T_VERSION=${_l4t_version}${HOLOSCAN_CLI_DEFAULT_DOCKER_BUILD_ARGS:+ ${HOLOSCAN_CLI_DEFAULT_DOCKER_BUILD_ARGS}}"
+    fi
+fi
+
+case "${1:-}" in
+    build|build-container|package|run|run-container|test)
+        _is_local_build=false
+        for _arg in "${CLI_ARGS[@]}"; do
+            [[ "${_arg}" == "--" ]] && break
+            [[ "${_arg}" == "--local" ]] && _is_local_build=true
+        done
+
+        # R38.5 provides SIPL runtime libraries through nvidia-l4t-camera,
+        # but its matching development headers are distributed as a separate
+        # source archive. Expose a supplied host tree for SIPL targets and
+        # holoscan-camera packaging. R38.5 SIPL source builds are experimental
+        # and not supported in this release; SIPL is supported only on Jetson
+        # AGX Thor with JetPack 7.2.1.
+        if [[ "${_is_local_build}" == false && "${_l4t_version}" == 38.5.* ]] &&
+                ! _is_container && [[ "${CLI_ARGS[1]:-}" == sipl_* ||
+                  "${CLI_ARGS[1]:-}" == holoscan-camera ||
+                  "${1:-}" == run-container ||
+                  -n "${HOLOSCAN_CAMERA_SIPL_SOURCE_DIR:-}" ]]; then
+            _sipl_source_root="${HOLOSCAN_CAMERA_SIPL_SOURCE_DIR:-/usr/src/jetson_sipl_api}"
+            if [[ -n "${HOLOSCAN_CAMERA_SIPL_SOURCE_DIR:-}" &&
+                    ! -f "${_sipl_source_root}/sipl/include/NvSIPLCamera.hpp" ]]; then
+                echo "[holoscan_camera] SIPL source missing NvSIPLCamera.hpp: ${_sipl_source_root}" >&2
+                exit 2
+            fi
+            if [[ -f "${_sipl_source_root}/sipl/include/NvSIPLCamera.hpp" ]]; then
+                _sipl_source_root="$(cd "${_sipl_source_root}" && pwd -P)"
+                _sipl_mount="--mount=type=bind,src=${_sipl_source_root},dst=/opt/holoscan-camera/jetson_sipl_api,readonly"
+                _append_docker_opts "${_sipl_mount}"
+                echo "[holoscan_camera] Exposing host SIPL source: ${_sipl_source_root}" >&2
+            fi
+            unset _sipl_source_root _sipl_mount
+        fi
+
+        unset _arg _is_local_build
+        ;;
+esac
+unset _l4t_version
+
+# Keep subprocesses launched by the CLI (including system-language pre-commit
+# hooks) on the interpreter that bootstrapped Holoscan CLI.
+PYTHON_BIN="$(command -v "${PYTHON_BIN}")"
+export HOLOSCAN_CLI_PYTHON_BIN="${PYTHON_BIN}"
+export PATH="${PYTHON_BIN%/*}:${PATH}"
+
+# exec so signals reach the CLI directly; `python -m` so the same interpreter
+# that bootstrapped the CLI above runs it (a `holoscan` console script on PATH
+# may resolve elsewhere).
+exec "${PYTHON_BIN}" -m holoscan_cli "${CLI_ARGS[@]}"

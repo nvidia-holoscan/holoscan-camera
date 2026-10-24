@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+@HOLOSCAN_CAMERA_SCHEMA_IMPORTS@
+__all__ = [@HOLOSCAN_CAMERA_SCHEMA_NAMES@]

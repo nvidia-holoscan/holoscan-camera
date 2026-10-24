@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+@PACKAGE_INIT@
+
+# A consumer that has not already configured the SDK (e.g. the module's Debian package installed
+# beside it) needs the holoscan::core / holoscan::sensor_io imported targets the exports link.
+if(NOT TARGET holoscan::core)
+    include(CMakeFindDependencyMacro)
+    find_dependency(holoscan 5.0.0 COMPONENTS core sensor_io)
+endif()
+
+# The package config is discoverable in <libdir>/cmake/@ARG_NAME@; the exported targets share
+# <libdir>/cmake/holoscan with the other Holoscan modules.
+include("${CMAKE_CURRENT_LIST_DIR}/../holoscan/@ARG_NAME@-targets.cmake")
+check_required_components(@ARG_NAME@)

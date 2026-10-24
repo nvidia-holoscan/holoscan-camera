@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+"""Registry-backed operators; optional native backends load on demand."""
+
+from importlib import import_module as _import_module
+
+from .. import _camera as _camera
+
+_MODULES = {@_camera_operator_modules@}
+__all__: list[str] = [@_camera_operator_exports@]
+
+
+def __getattr__(name: str):
+    if name not in _MODULES:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    # Cache only successful imports: a missing optional runtime must remain retryable.
+    value = getattr(_import_module(_MODULES[name], __name__), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__():
+    return sorted(set(globals()) | set(__all__))

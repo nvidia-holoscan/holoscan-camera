@@ -1,0 +1,141 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+# Project-local CTest driver used by `./holoscan_camera test`.
+
+set(CTEST_PROJECT_NAME "Holoscan-Modules")
+
+set(PROJ_NAME "")
+set(PROJ_OPTION_NAME "")
+set(PROJ_PREFIX APP)
+
+if(OP)
+  set(PROJ_NAME ${OP})
+  set(PROJ_OPTION_NAME ${OP})
+  set(PROJ_PREFIX OP)
+elseif(PKG)
+  set(PROJ_NAME ${PKG})
+  set(PROJ_OPTION_NAME ${PKG})
+  set(PROJ_PREFIX PKG)
+elseif(APP)
+  set(PROJ_NAME ${APP})
+  set(PROJ_OPTION_NAME ${APP})
+endif()
+
+if(NOT PROJ_NAME)
+  set(PROJ_NAME "holoscan-camera")
+endif()
+
+get_filename_component(CTEST_SOURCE_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+set(CTEST_BINARY_DIRECTORY "${CTEST_SOURCE_DIRECTORY}/build/ctest-${PROJ_NAME}")
+
+if(NOT CTEST_SITE)
+  set(CTEST_SITE "SITE_NA")
+endif()
+if(NOT TAG)
+  set(TAG "local")
+endif()
+if(NOT PLATFORM_NAME)
+  set(PLATFORM_NAME "linux")
+endif()
+
+if(CDASH_BUILD_NAME)
+  set(CTEST_BUILD_NAME "${CDASH_BUILD_NAME}")
+else()
+  set(CTEST_BUILD_NAME "holoscan-camera-${PLATFORM_NAME}-${PROJ_NAME}-${TAG}")
+endif()
+set(CTEST_CMAKE_GENERATOR "Ninja")
+set(CTEST_NIGHTLY_START_TIME "06:00:00 UTC")
+
+if(NOT DASHBOARD_MODEL)
+  set(DASHBOARD_MODEL "Experimental")
+endif()
+
+# CTest refuses to empty an existing directory without a CMake cache. This can
+# happen before the first configure or after an interrupted configure.
+if(EXISTS "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt")
+  ctest_empty_binary_directory("${CTEST_BINARY_DIRECTORY}")
+endif()
+
+# The CI SBSA runner can build Argus but cannot run its Jetson runtime tests.
+# Disable registration (including GoogleTest discovery), retaining compilation coverage.
+# A Jetson runner can opt in with -DHOLOSCAN_CAMERA_RUN_ARGUS_TESTS=ON.
+if(NOT DEFINED HOLOSCAN_CAMERA_RUN_ARGUS_TESTS)
+  set(HOLOSCAN_CAMERA_RUN_ARGUS_TESTS OFF)
+endif()
+set(configure_options
+  ${CONFIGURE_OPTIONS}
+  "-DHOLOHUB_DATA_DIR=${CTEST_SOURCE_DIRECTORY}/data"
+  "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+  "-DHOLOSCAN_CAMERA_BUILD_TESTING=ON"
+)
+
+# CI passes a comma-separated set of supported operators for the host. Keep
+# the normal single-project CLI behavior when this option is absent.
+if(DEFINED HOLOSCAN_CAMERA_SMOKE_OPERATORS)
+  if(HOLOSCAN_CAMERA_SMOKE_OPERATORS STREQUAL "")
+    message(FATAL_ERROR "HOLOSCAN_CAMERA_SMOKE_OPERATORS cannot be empty")
+  endif()
+  string(REPLACE "," ";" smoke_operators "${HOLOSCAN_CAMERA_SMOKE_OPERATORS}")
+  set(seen_operators "")
+  list(APPEND configure_options "-DHOLOSCAN_CAMERA_BUILD_ALL=OFF")
+  foreach(smoke_operator IN LISTS smoke_operators)
+    if(NOT smoke_operator MATCHES "^(v4l2|sipl|argus)$")
+      message(FATAL_ERROR "Unknown smoke operator: ${smoke_operator}")
+    endif()
+    if(smoke_operator IN_LIST seen_operators)
+      message(FATAL_ERROR "Duplicate smoke operator: ${smoke_operator}")
+    endif()
+    list(APPEND seen_operators "${smoke_operator}")
+    if(smoke_operator STREQUAL "v4l2")
+      list(APPEND configure_options "-DAPP_holoscan_camera_v4l2=ON")
+    elseif(smoke_operator STREQUAL "sipl")
+      list(APPEND configure_options
+        "-DAPP_sipl_frame_saver=ON"
+        "-DAPP_sipl_stereo_monitor=ON"
+        "-DAPP_sipl_player=ON")
+    elseif(smoke_operator STREQUAL "argus")
+      list(APPEND configure_options "-DAPP_holoscan_camera_argus=ON")
+      set(HOLOSCAN_CAMERA_RUN_ARGUS_TESTS ON)
+    endif()
+  endforeach()
+  message(STATUS "Camera-free smoke operators: ${HOLOSCAN_CAMERA_SMOKE_OPERATORS}")
+elseif(PROJ_OPTION_NAME)
+  list(APPEND configure_options "-D${PROJ_PREFIX}_${PROJ_OPTION_NAME}=ON")
+endif()
+list(APPEND configure_options
+  "-DHOLOSCAN_CAMERA_RUN_ARGUS_TESTS=${HOLOSCAN_CAMERA_RUN_ARGUS_TESTS}")
+message(STATUS "Argus test execution: ${HOLOSCAN_CAMERA_RUN_ARGUS_TESTS} (requires Jetson runtime)")
+
+ctest_start(${DASHBOARD_MODEL})
+ctest_configure(OPTIONS "${configure_options}" RETURN_VALUE configure_result)
+if(NOT configure_result)
+  ctest_build(RETURN_VALUE build_result)
+endif()
+
+if(NOT configure_result AND NOT build_result)
+  if(DEFINED HOLOSCAN_CAMERA_SMOKE_OPERATORS)
+    ctest_test(
+      EXCLUDE_LABEL "hardware"
+      RETURN_VALUE test_result
+      OUTPUT_JUNIT "${CTEST_BINARY_DIRECTORY}/junit.xml"
+    )
+  else()
+    ctest_test(
+      RETURN_VALUE test_result
+      OUTPUT_JUNIT "${CTEST_BINARY_DIRECTORY}/junit.xml"
+    )
+  endif()
+endif()
+
+if(CTEST_SUBMIT_URL)
+  ctest_submit()
+endif()
+
+if(configure_result)
+  message(FATAL_ERROR "Configure failed with return value: ${configure_result}")
+elseif(build_result)
+  message(FATAL_ERROR "Build failed with return value: ${build_result}")
+elseif(test_result)
+  message(FATAL_ERROR "Tests failed with return value: ${test_result}")
+endif()

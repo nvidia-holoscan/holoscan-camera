@@ -1,0 +1,47 @@
+{
+    "$schema": "urn:holohub:application:v1",
+    "application": {
+        "name": "holoscan_camera_argus",
+        "authors": [
+            {
+                "name": "Holoscan Team",
+                "affiliation": "NVIDIA"
+            }
+        ],
+        "description": "Python graph using the native Argus operator to capture typed images and sensor metadata",
+        "language": "Python",
+        "version": "0.1.0",
+        "changelog": {
+            "0.1.0": "SDK 5 Python graph validation and live capture through ArgusCaptureOp"
+        },
+        "holoscan_sdk": {
+            "minimum_required_version": "5.0.0",
+            "tested_versions": ["5.0.0"]
+        },
+        "platforms": ["aarch64"],
+        "tags": ["Camera", "Argus", "Sensor IO", "Python"],
+        "ranking": 3,
+        "requirements": {
+            "python": "CPython 3.12 or newer with matching Holoscan SDK 5 Python bindings and nanobind 3.0.1",
+            "linux": "Compatible Jetson BSP with libargus, NvBufSurface, EGL and CUDA, including for graph validation",
+            "capture": "Argus-supported camera exposed by nvargus-daemon"
+        },
+        "default_mode": "validate",
+        "modes": {
+            "validate": {
+                "description": "Compile the Python Argus graph without opening a camera",
+                "run": {
+                    "command": "python3 \"<holohub_root>/applications/holoscan_camera_argus/python/argus_capture.py\" --validate",
+                    "workdir": "holohub_root"
+                }
+            },
+            "capture": {
+                "description": "Capture host-memory images and 120 metadata samples from Argus camera 0, sensor mode 0",
+                "run": {
+                    "command": "python3 \"<holohub_root>/applications/holoscan_camera_argus/python/argus_capture.py\"",
+                    "workdir": "holohub_root"
+                }
+            }
+        }
+    }
+}

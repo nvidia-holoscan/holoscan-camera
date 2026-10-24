@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+# Update this pin deliberately and rebuild the development image.
+--extra-index-url https://pypi.nvidia.com
+holoscan-cli[create]==5.0.0

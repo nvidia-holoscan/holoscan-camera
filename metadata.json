@@ -1,0 +1,40 @@
+{
+  "$schema": "urn:holoscan:module:v2",
+  "module": {
+    "name": "holoscan-camera",
+    "version": "1.0.0",
+    "description": "Concrete camera implementations for Holoscan SDK 5.0",
+    "authors": [
+      {
+        "name": "Holoscan Team",
+        "affiliation": "NVIDIA"
+      }
+    ],
+    "license": "Apache-2.0",
+    "language": ["C++", "Python"],
+    "namespace": {
+      "cpp": "holoscan::camera",
+      "python": "holoscan.camera"
+    },
+    "holoscan_sdk": {
+      "minimum_required_version": "5.0.0",
+      "tested_versions": ["5.0.0"]
+    },
+    "platforms": ["x86_64", "aarch64"],
+    "tags": ["Camera", "V4L2", "SIPL", "Argus", "Jetson", "IGX"],
+    "source_repository": "https://github.com/nvidia-holoscan/holoscan-camera",
+    "operator_names": ["v4l2_capture_op", "sipl_capture_op", "argus_capture_op"],
+    "dockerfile": "Dockerfile",
+    "binary_packages": {
+      "debian": "holoscan-camera",
+      "wheel": "holoscan-camera-cu13"
+    },
+    "documentation": {
+      "readme": "README.md"
+    },
+    "testing": {
+      "cpp": "ctest",
+      "python": "pytest"
+    }
+  }
+}

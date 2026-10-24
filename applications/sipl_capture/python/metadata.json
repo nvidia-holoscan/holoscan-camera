@@ -1,0 +1,49 @@
+{
+    "$schema": "urn:holohub:application:v1",
+    "application": {
+        "name": "sipl_capture",
+        "authors": [
+            {
+                "name": "Holoscan Team",
+                "affiliation": "NVIDIA"
+            }
+        ],
+        "description": "Python graph that captures frames and their metadata from every camera of an NvSIPL camera configuration",
+        "language": "Python",
+        "version": "0.1.0",
+        "changelog": {
+            "0.1.0": "Initial implementation, with the SIPL Python bindings"
+        },
+        "holoscan_sdk": {
+            "minimum_required_version": "5.0.0",
+            "tested_versions": ["5.0.0"]
+        },
+        "platforms": ["aarch64"],
+        "tags": ["Camera", "SIPL", "Jetson", "Python"],
+        "ranking": 3,
+        "requirements": {
+            "python": "CPython 3.12 or newer with matching Holoscan SDK 5 Python bindings",
+            "linux": "NvSIPL runtime and development headers"
+        },
+        "default_mode": "validate",
+        "modes": {
+            "validate": {
+                "description": "Compile the Python SIPL graph without opening a camera",
+                "run": {
+                    "command": "bash \"<holohub_root>/python/run_sample.sh\" \"<holohub_root>/applications/sipl_capture/python/sipl_capture.py\" --validate",
+                    "workdir": "holohub_root"
+                }
+            },
+            "capture": {
+                "description": "Capture from every camera of the SIPL camera configuration until one has delivered 120 frames",
+                "run": {
+                    "command": "bash \"<holohub_root>/python/run_sample.sh\" \"<holohub_root>/applications/sipl_capture/python/sipl_capture.py\"",
+                    "workdir": "holohub_root",
+                    "docker_run_args": [
+                        "--privileged"
+                    ]
+                }
+            }
+        }
+    }
+}

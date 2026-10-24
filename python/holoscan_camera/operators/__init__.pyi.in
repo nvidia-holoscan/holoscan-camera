@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+"""Camera operators enabled in this build."""
+
+@_camera_operator_imports@
+__all__: list[str] = [@_camera_operator_exports@]

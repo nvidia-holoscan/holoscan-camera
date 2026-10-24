@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+[build-system]
+requires = ["scikit-build-core==1.0.3", "nanobind==3.0.1"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "holoscan-camera-cu13"
+version = "1.0.0"
+description = "Camera capture for Holoscan SDK"
+readme = "python/PACKAGE.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+dependencies = ["holoscan-core-cu13==5.0.0"]
+
+[project.entry-points."holoscan.modules"]
+camera = "holoscan_camera"
+
+[tool.scikit-build]
+cmake.version = ">=4.0"
+cmake.build-type = "Release"
+wheel.packages = []
+wheel.py-api = "cp312"
+install.components = ["holoscan-wheel-camera"]
+
+[tool.scikit-build.cmake.define]
+BUILD_SHARED_LIBS = true
+HOLOSCAN_BUILD_PYTHON_STUBS = true
+HOLOSCAN_CAMERA_BUILD_PYTHON = true
+HOLOSCAN_CAMERA_BUILD_ALL = false
+OP_v4l2_capture_op = true
+HOLOSCAN_CAMERA_BUILD_TESTING = false
+
+[tool.holoscan]
+repo-prefix = "holoscan_camera"
+container-prefix = "holoscan-camera"
+workspace-name = "holoscan_camera"
+cuda = 13
+ctest-script = "cmake/container.ctest"
+# SIPL hardware tests read these inside the container; unset names are not forwarded.
+forward-env = [
+    "SIPL_CAMERA_CONFIG",
+    "SIPL_JSON_CONFIG",
+    "SIPL_CAMERA_INDEX",
+    "SIPL_CUDA_DEVICE",
+]
+
+# Local development images produced by the Holoscan SDK source build.
+[tool.holoscan.base-images]
+x86_64 = "holoscan-sdk-build-x86_64:latest"
+aarch64 = "holoscan-sdk-build-aarch64:latest"
