@@ -2,8 +2,8 @@
 
 ## Release Artifacts
 
-Holoscan Camera 1.0.0 extends Holoscan SDK 5.0 with C++ and Python camera
-operators. Use the artifact and backend supported by your host BSP and camera.
+The links below identify the Holoscan Camera 1.0 installation channels. Check
+individual channels for published artifacts.
 
 - **Documentation:** [Camera setup and supported platforms](README.md).
 - **Python distribution:** `holoscan-camera-cu13`, with the companion
@@ -11,16 +11,15 @@ operators. Use the artifact and backend supported by your host BSP and camera.
 - **C++ distribution:** `holoscan-camera` Debian package and installed CMake
   targets; see [build, test, and consume](README.md#build-test-and-consume).
 
-Package names identify the release formats; check the selected distribution
-channel for availability. Source and binary builds require CUDA 13 and a
-compatible SDK installation containing `holoscan::sensor_io`. See
+Source and binary builds require CUDA 13 and a compatible SDK installation
+containing `holoscan::sensor_io`. See
 [SDK setup](README.md#holoscan-sdk-50-setup) for prerequisites.
 
 ## 1.0.0
 
-Holoscan Camera's first general-availability release provides V4L2, SIPL, and
-Argus capture operators for native SDK graphs, Python operator facades, and
-reference applications for capture, visualization, and stereo diagnostics.
+Holoscan Camera 1.0.0 provides V4L2, SIPL and Argus camera capture operators
+for Holoscan SDK 5.0, with C++ and Python APIs and reference applications for
+capture, visualization and stereo diagnostics.
 
 ### New Features and Improvements
 
@@ -68,7 +67,11 @@ An advertised name or typing declaration does not establish runtime support.
   GPU-demosaiced RAW10 (`--raw`). C++ and Python versions are available; the
   CLI selects Python by default, or C++ with `--language cpp`.
 
-### Breaking and Behavior Changes
+### Migration from Earlier Camera Previews
+
+The following guidance applies to applications developed against earlier
+Holoscan Camera previews for Holoscan SDK 5.x, including Early Access versions.
+New applications should use the APIs and behavior documented for Camera 1.0.0.
 
 #### C++ namespace, metadata payload names, and library ABI
 
@@ -86,8 +89,10 @@ applications built against 0.x libraries.
 
 #### SIPL operator construction
 
-`SIPLCaptureOp` requires its shared `SIPLCaptureService` and camera index at
-construction. Replace the removed `SIPLCaptureOpParams` / `set_params()` path:
+Camera 0.3.0, targeting Holoscan SDK 5.0 EA2, used the
+`SIPLCaptureOpParams` / `set_params()` interface. Camera 0.4.0 moved to the
+post-EA2 SDK APIs. In Camera 1.0.0, `SIPLCaptureOp` requires its shared
+`SIPLCaptureService` and camera index at construction. Replace the earlier path:
 
 ```cpp
 auto camera = graph.op<SIPLCaptureOp>("camera", holoscan::MemoryKind::kHost);
@@ -110,13 +115,19 @@ may lack those APIs. Schema generation requires the `SCHEMA`,
 `COMPATIBILITY_EPOCH`, and `MAX_SERIALIZED_SIZE` helper arguments as well as
 shared-pointer constructor captures. See [SDK setup](README.md#holoscan-sdk-50-setup).
 
+### Runtime Behavior
+
+The following describes Camera 1.0.0 runtime behavior and configuration choices.
+Applications using earlier previews should also review the delivery and timing
+semantics when upgrading.
+
 #### ArgusCaptureOp default frame delivery
 
-The default `drop_policy`, `kDropOldest`, now selects the newest queued frame
+The default `drop_policy`, `kDropOldest`, selects the newest queued frame
 on **every compute activation**, during both startup and steady state. Older
-queued frames are discarded even when the queue is not full. Previously,
-compute consumed queued frames in FIFO order, and this policy discarded an
-old frame only when the completed-frame queue was full.
+queued frames are discarded even when the queue is not full. Earlier Camera previews
+consumed queued frames in FIFO order, and this policy discarded an old frame
+only when the completed-frame queue was full.
 
 This releases native capture buffers sooner to prevent a persistent backlog
 from reducing capture throughput and increasing latency. Existing applications
@@ -216,13 +227,18 @@ version. Earlier prerelease CLI exports are no longer required.
 
 ### Known Limitations
 
-**SIPL platform scope:** `SIPLCaptureOp` is supported only on Jetson AGX Thor
-with JetPack 7.2.1 (R39.2) in this release. SIPL capture on Jetson Orin and on
-IGX Thor T5000 is not part of this release. Users who need SIPL on IGX Thor T5000
-can install JetPack 7.2.1
+**Backend compatibility:** Support depends on the platform, BSP and camera.
+
+`SIPLCaptureOp` is supported only on Jetson AGX Thor with JetPack 7.2.1 (R39.2)
+in this release. SIPL capture on Jetson Orin and on IGX Thor T5000 is not part
+of this release. Users who need SIPL on IGX Thor T5000 can install JetPack 7.2.1
 (6953514). IGX Thor T7000 has no
-SIPL hardware support. IGX OS 2.0 / R38.5 SIPL source builds remain experimental. See
-[Supported platforms](README.md#supported-platforms).
+SIPL hardware support. IGX OS 2.0 / R38.5 SIPL source builds remain experimental
+and unsupported for this release.
+
+Argus requires its supported Jetson Orin BSP/runtime libraries. Optional
+backends require host-provided libraries; an advertised API does not establish
+runtime support. See [Supported platforms](README.md#supported-platforms).
 
 **V4L2 capture quality (6744108):**
 affected camera/USB configurations can report degraded or driver-flagged
@@ -235,6 +251,9 @@ sample quality flags and reject invalid frames; see
 
 ### Known Issues
 
+<!-- Keep complete issue descriptions in single-line Markdown table rows. -->
+<!-- markdownlint-disable MD013 -->
+
 | Issue | Component | Description |
 | --- | --- | --- |
 | 6801049 | SIPL | Capture from a single mapped VB1940 camera can fail on Jetson, including Jetson AGX Thor. Reports include device-tree access and camera-database parsing errors; the single-camera failure remains under investigation separately from stereo startup timing. |
@@ -242,3 +261,5 @@ sample quality flags and reject invalid frames; see
 | 6854954 | SIPL | On Jetson Thor with Jetson Linux R39.2.1 and ISP enabled, synchronized VB1940 frames can report capture-start timestamps about 18 ms apart. This metadata discrepancy was reproduced in the native SIPL sample; the RAW-only control had close capture-start timestamps. It can mislead timestamp-based stereo checks and fusion. It does not establish physical exposure skew, and no common cause with the separate delivery delay in 6854955 has been established. |
 | 6714027 | SIPL | Stereo-synchronized SIPL capture with HSB VB1940 cameras can intermittently fail to start or stall, including on JetPack 7.2.1. Initial native-sample tests on JetPack 7.2.0 and 7.2.1 recorded 11–16 failures per 100 runs, with frames stopping within roughly the first five seconds. Streams reaching ten seconds remained stable in those tests; this observation is not a stability guarantee. Investigated Camera over Ethernet (CoE) failures include fatal capture timeouts following a PTP clock step during capture. Confirm PTP lock before starting capture to mitigate the clock-step failure path, and continue monitoring stream health. Separate ISP failures were also observed without PTP, so this is not a general workaround for startup stalls. See the [SIPL benchmarks and qualification results](operators/sipl_capture_op/benchmarks.md) for historical measurements. |
 | 6854955 | SIPL | On Jetson Thor with Jetson Linux R39.2.1, synchronized VB1940 stereo capture at 30 FPS can deliver the secondary camera frame about one frame period (33 ms) after the primary. The completion-queue receipt delay was reproduced with the native SIPL sample, including RAW-only output and independent readers, without Holoscan in the capture path. Receipt time was recorded immediately after the application's completion-queue `Get()` returned; internal enqueue time was not measured, leaving internal staging versus reader wake latency unresolved. This finding is distinct from the intermittent approximately 18 ms capture-start timestamp discrepancy in 6854954; no common cause is established. It adds stereo-pair latency even when throughput remains approximately 30 FPS; it does not establish sensor capture-time skew or ISP serialization. Qualify stereo-pair delivery latency for the application; no workaround preserving synchronization has been verified. |
+
+<!-- markdownlint-enable MD013 -->

@@ -18,7 +18,6 @@ shared libraries, and Python enabled. Native SDK headers and libraries alone
 are insufficient: the selected Python 3.12+ interpreter must also import the
 matching SDK 5 `holoscan` package.
 
-
 On a Jetson with the native build dependencies installed, run from the Camera
 repository root:
 

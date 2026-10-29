@@ -20,7 +20,6 @@ shared libraries, and Python enabled. The SIPL operator also needs an SDK with
 constructor handles. The selected Python 3.12+ interpreter must import the
 matching SDK 5 `holoscan` package.
 
-
 On a Jetson or IGX system with the native build dependencies, run from the Camera
 repository root:
 

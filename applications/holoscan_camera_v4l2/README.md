@@ -3,7 +3,7 @@
 The V4L2 reference application compiles a capture graph without opening a device
 or streams from a real camera and reports capture timestamps, frame quality, and
 latency. See the [V4L2 operator guide](../../operators/v4l2_capture_op/README.md) for its capture and
-memory-placement contracts and the [repository setup guide](../../README.md#holoscan-sdk-50-setup)
+memory-placement contracts and the [repository setup guide](https://docs.nvidia.com/holoscan/sdk-user-guide/setup/sdk-installation)
 for SDK setup.
 
 The commands below use the C++ application. For Python graph validation,

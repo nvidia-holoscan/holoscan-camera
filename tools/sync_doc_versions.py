@@ -37,7 +37,7 @@ def render(root, key):
             label += " " + match[4].upper()
         return (
             f"The published SDK {label} source tag (`{tag}`) is one baseline; see the\n"
-            f"[SDK {label} release notes](https://github.com/nvidia-holoscan/holoscan-sdk/blob/{tag}/RELEASE_NOTES.md)\n"
+            f"[SDK {label} release notes](https://github.com/nvidia-holoscan/holoscan-sdk/releases/tag/{tag})\n"
             "for release details.\n"
         )
     if key == "sdk-ga-image":

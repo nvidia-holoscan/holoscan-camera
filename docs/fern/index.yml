@@ -15,9 +15,15 @@ navigation:
       - page: SIPL Capture Operator
         path: ../../operators/sipl_capture_op/README.md
         slug: sipl-capture
+      - page: SIPL Python Bindings
+        path: ../../operators/sipl_capture_op/python/README.md
+        slug: sipl-python
       - page: Argus Capture Operator
         path: ../../operators/argus_capture_op/README.md
         slug: argus-capture
+      - page: Argus Python Bindings
+        path: ../../operators/argus_capture_op/python/README.md
+        slug: argus-python
   - section: Applications
     slug: applications
     skip-slug: true

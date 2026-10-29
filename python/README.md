@@ -93,13 +93,12 @@ post-construction parameter replacement is rejected.
 
 The corresponding SDK documentation and API contracts are:
 
-- `docs/python_registered_operators.mdx`, **Registered Operators**: provider
+- [Registered Operators guide](https://docs.nvidia.com/holoscan/sdk-user-guide/python/registered-operators): provider
   imports, registry discovery, Python proxies, handles, and generated typing.
 - `include/holoscan/authoring/registry.hpp`: `RegisteredOperatorType` and
   `OperatorParameterIntrospection::kConstructorReplay`.
 - `include/holoscan/authoring/register_operator.hpp`:
   `ManualOperatorRegistrationThunks` and the callbacks supplied by a manual registration.
-
 
 ## Import paths and module discovery
 
@@ -154,7 +153,6 @@ Use a Holoscan SDK 5 revision with downstream operator-stub generation and decla
 coverage checks for the Camera Python package. For source builds, the SDK's stub
 helper must collect `HOLOSCAN_PYTHON_IMPORT_DEPENDENCIES` from extension targets.
 
-
 Build the SDK with Python enabled, shared libraries, and its Python dependency
 toolchain (CPython 3.12 and nanobind 3.0.1). From the SDK source directory
 containing its `run` script:
@@ -205,6 +203,12 @@ Select native operators explicitly, for example `-DOP_v4l2_capture_op=ON`.
 capture operator on. Selecting an application or package can also enable its
 required operators through the existing dependency rules.
 
+The Camera 1.0 release support policy applies to Python capture as well as
+C++. The table below describes supported capture combinations, rather than
+which native extensions can be imported; see the
+[platform overview](../README.md#supported-platforms) and
+[release limitations](../RELEASE_NOTES.md#known-limitations).
+
 Wheel runtime support is:
 
 | Runtime | V4L2 | SIPL | Argus |
@@ -212,11 +216,14 @@ Wheel runtime support is:
 | x86_64 Linux | Supported | Unsupported | Unsupported |
 | ARM64 SBSA / DGX Spark | Supported | Unsupported | Unsupported |
 | IGX R38 | Supported | Unsupported | Unsupported |
-| R39 Orin | Supported | Supported (API v2) | Supported |
-| R39 Thor | Supported | Supported (API v2) | Unsupported |
+| Jetson AGX Orin + JetPack 7.2.1 (R39.2) | Supported | Unsupported | Supported |
+| Jetson AGX Thor + JetPack 7.2.1 (R39.2) | Supported | Supported (API v2) | Unsupported |
 
-The wheel ships all operator facades and typing declarations. Unsupported
-backend imports may fail; their visibility is not a capability guarantee.
+The wheel ships all operator facades and typing declarations. A backend may
+import successfully wherever compatible BSP libraries are present, including
+SIPL on Orin; this does not qualify capture or expand the release support
+policy. Unsupported backend imports may also fail; their visibility is not a
+capability guarantee.
 `import holoscan_camera`, `from holoscan_camera import operators`, and importing
 `V4l2CaptureOp` never load SIPL or Argus. Explicit imports load only that backend:
 
@@ -250,7 +257,6 @@ families and their native codecs follow the native backend selection. The
 facades and committed operator stubs live beside their implementations in
 `operators/<backend>_capture_op/python/`; SIPL's native service bindings and
 CuPy converters also live beside its operator.
-
 
 Use the Holoscan Camera development image for the CLI build and run workflow.
 See the [V4L2 application guide](../applications/holoscan_camera_v4l2/python/README.md)
@@ -371,7 +377,6 @@ selection such as `v4l2,sipl` on a compatible runtime. The older
 selection is provided. The manual `holoscan-camera-check-r39-stubs` aggregate
 also remains available when both optional backends can load. See the backend
 guides for their runtime prerequisites.
-
 
 Set `HOLOSCAN_BUILD_PYTHON_STUBS=OFF` for builds unable to import target binaries;
 such builds do not install typing markers. Reconfiguration also removes the

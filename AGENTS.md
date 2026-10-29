@@ -24,4 +24,3 @@ commit again. Without the hook, run `uvx pre-commit run --files <paths>`, or
 
 See [.ai-rules/README.md](.ai-rules/README.md) before changing rule storage or
 tool-specific entrypoints.
-

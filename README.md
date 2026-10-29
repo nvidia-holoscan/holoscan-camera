@@ -97,11 +97,44 @@ a general Camera operator configuration format.
 Use the operator guides for C++ construction examples and each application's
 guide for the CLI options it implements.
 
+## Install Holoscan Camera 1.0
+
+### Python wheel
+
+Install the [published Camera wheel](https://pypi.org/project/holoscan-camera/1.0.0/)
+in a CPython 3.12 or newer virtual environment on Linux with glibc 2.39 or
+newer (such as Ubuntu 24.04) and a compatible CUDA 13 runtime:
+
+```bash
+python -m pip install "holoscan-camera==1.0.0"
+```
+
+This installs the architecture-specific Camera CUDA 13 wheel and its
+`holoscan-core-cu13==5.0.0` dependency. Optional SIPL and Argus capture require
+the supported hardware and matching BSP runtime described in
+[Supported platforms](#supported-platforms). See the
+[Python guide](python/README.md) for imports and backend requirements.
+
+### Debian packages
+
+Install the Holoscan Camera Debian package for C++ headers, libraries, and
+CMake integration.
+
+- **Workstation support**: Visit [NVIDIA Holoscan Debian downloads](https://developer.nvidia.com/holoscan-downloads)
+  to configure the NVIDIA package repository for your platform. Camera packages
+  are published in the Ubuntu 24.04 [x86_64 repository](https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/)
+  and [ARM64 SBSA repository](https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/sbsa/)
+  as `holoscan-camera-cuda-13` and its runtime/development dependencies.
+- **NVIDIA Devkit support**: Use the matching JetPack or IGX package channel
+  on BSP-based devices; an ARM64 SBSA package does not establish SIPL or Argus
+  support.
+
 ## Build, test, and consume
 
 Set `HOLOSCAN_SDK_ROOT` to an SDK 5.x installation containing `holoscan::sensor_io`;
-see [SDK setup](#holoscan-sdk-50-setup) below. Run these commands from the Camera
-repository root. Graph validation and unit tests do not qualify physical capture;
+see the [SDK installation guide](https://docs.nvidia.com/holoscan/sdk-user-guide/setup/sdk-installation).
+Run these commands from the Camera repository root. Graph validation and unit
+tests do not qualify physical capture;
 follow each application guide for live-camera tests.
 
 ### Quick Start
@@ -153,7 +186,7 @@ Python version.
 
 | Requirement | Version |
 | --- | --- |
-| Holoscan SDK | 5.0 with `sensor_io`; see [SDK setup](#holoscan-sdk-50-setup) |
+| Holoscan SDK | 5.0 with `sensor_io`; see [SDK installation](https://docs.nvidia.com/holoscan/sdk-user-guide/setup/sdk-installation) |
 | CUDA Toolkit | 13.x |
 | CMake | >= 4.0 |
 | C++ compiler | C++20 |
@@ -205,13 +238,16 @@ for its current capture evidence.
 Optional [Python bindings](python/README.md) expose native capture operators
 to Holoscan SDK Python graphs. See individual components for support details.
 
-## Holoscan SDK 5.0 Setup
+<!-- holoscan-markdown-only:begin -->
+## Holoscan SDK Setup
 
-Choose a Holoscan SDK 5.0 source baseline for your development.
+Use Holoscan SDK 5.0 GA for Camera 1.0. The published source baseline is
+listed below; see [installation options](#install-holoscan-camera-10) for
+prebuilt Camera packages.
 
 <!-- module-docs:sdk-source -->
-The published SDK 5.0.0 EA3 source tag (`v5.0.0-ea3`) is one baseline; see the
-[SDK 5.0.0 EA3 release notes](https://github.com/nvidia-holoscan/holoscan-sdk/blob/v5.0.0-ea3/RELEASE_NOTES.md)
+The published SDK 5.0.0 source tag (`v5.0.0`) is one baseline; see the
+[SDK 5.0.0 release notes](https://github.com/nvidia-holoscan/holoscan-sdk/releases/tag/v5.0.0)
 for release details.
 <!-- /module-docs:sdk-source -->
 
@@ -226,7 +262,6 @@ Set `HOLOSCAN_SDK_ROOT` explicitly to the resulting SDK installation
 directory. The installation must include `holoscan::sensor_io`, which this
 module requires. See [SDK installation troubleshooting](#sdk-installation-troubleshooting)
 if CMake rejects the installation.
-
 
 Build the SDK and set the installation path. Enter the Holoscan SDK source
 directory containing `run`:
@@ -248,6 +283,8 @@ echo ${HOLOSCAN_SDK_ROOT}
 cd -
 ```
 
+<!-- holoscan-markdown-only:end -->
+
 ## Language Support
 
 Holoscan SDK 5 operators are implemented in C++. Optional Python bindings
@@ -260,7 +297,9 @@ Python-enabled SDK installation and CPython 3.12 or newer. See the
 
 ### Integrating with custom Holoscan SDK 5.0 development
 
-Use the local SDK workflow documented above to integrate and develop Holoscan Camera changes against Holoscan SDK 5.0 development:
+Use the local SDK workflow in the
+[developer guide](DEVELOPER.md#holoscan-sdk-baseline) to develop Camera against
+a custom Holoscan SDK installation:
 
 1. Develop and test changes in the Holoscan SDK 5.0 project
 2. Update the Holoscan SDK 5.0 installation folder to latest development
@@ -282,7 +321,7 @@ rebuild and install your selected Holoscan SDK 5.0 source with `sensor_io`, then
 
 Holoscan Camera depends on Holoscan SDK 5.0 and its CUDA 13 dependency. Earlier Holoscan installations are not
 compatible. Start with clean build and installation folders and a compatible SDK source
-baseline from [SDK setup](#holoscan-sdk-50-setup), then try again.
+baseline from [SDK installation](https://docs.nvidia.com/holoscan/sdk-user-guide/setup/sdk-installation), then try again.
 The SDK package version alone does not establish source compatibility.
 
 ## License

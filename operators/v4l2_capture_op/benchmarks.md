@@ -11,7 +11,7 @@ The camera model attached to each platform was not recorded. Differences may
 therefore be device-specific; their cause has not been established. Repeat runs
 with the same camera model before attributing a difference to the platform.
 
-Run from the repository root after completing [SDK setup](../../README.md#holoscan-sdk-50-setup).
+Run from the repository root after completing [SDK setup](https://docs.nvidia.com/holoscan/sdk-user-guide/setup/sdk-installation).
 Check that the device supports YUYV, then capture 300 frames with an explicit
 window (the example below uses the longer window that completed on x86 + Blackwell):
 

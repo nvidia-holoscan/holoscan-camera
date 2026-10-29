@@ -25,7 +25,7 @@ Operator tests live beside the operator they cover, under
 
 ## Holoscan SDK baseline
 
-Choose the SDK source baseline described in [SDK setup](README.md#holoscan-sdk-50-setup).
+Choose the SDK source baseline described in [SDK setup](README.md#holoscan-sdk-setup).
 Build and install that checkout before selecting it for Camera development.
 Enter the SDK source directory containing `run`:
 
@@ -46,7 +46,6 @@ Build and test commands pass the selected SDK installation to CMake as
 
 The wrapper accepts an explicit base image through `--base-img` or
 `HOLOSCAN_CLI_BASE_IMAGE`. Select an image compatible with your SDK installation.
-
 
 ### Public SDK container
 
@@ -187,7 +186,6 @@ supported package prefix.
 Build the Python wheel with `--pkg-generator=WHEEL`; see
 [Wheel builds](python/README.md#wheel-builds).
 
-
 Keep these metadata fields synchronized before publishing:
 
 | Field | Purpose |
@@ -226,4 +224,3 @@ unmarked compatibility examples retain their original values.
 
 The SDK tag is a source reference, not proof of testing or acceptance. The helper
 performs no remote version discovery and makes no compatibility decision.
-

@@ -36,9 +36,7 @@ class SyncDocVersionsTest(unittest.TestCase):
         self.assertEqual((self.root / "README.md").read_bytes(), before)
         synchronize(self.root, True)
         self.assertEqual(synchronize(self.root, True), [])
-        self.assertIn(
-            "/v5.0.0-ea3/RELEASE_NOTES.md", (self.root / "README.md").read_text()
-        )
+        self.assertIn("/releases/tag/v5.0.0-ea3", (self.root / "README.md").read_text())
 
     def test_input_only_change_updates_all_marked_occurrences(self):
         (self.root / "DEVELOPER.md").write_text(marked("sdk-source"))
