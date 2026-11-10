@@ -3,12 +3,23 @@ Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
 This product includes software developed at NVIDIA CORPORATION (https://www.nvidia.com/).
 
-Holoscan Camera uses the following open source software. None of these components are vendored in this repository. Versions for DLPack and FlatBuffers are those recorded for Holoscan SDK 5; this module uses the copies provided by the SDK it links.
+This notice inventories the third-party and NVIDIA components that Holoscan Camera 1.0.0 uses, grouped by distribution role. None of these components are vendored in this repository. Code in the first group is compiled into Camera binaries; its copyright and license notices are reproduced at the end of this file, which is installed with every Camera wheel and package. The remaining groups are compiled against, installed separately, or used only for development, and are governed solely by their own terms.
 
-DLPack (https://github.com/dmlc/dlpack)
-Version 1.3, as provided by Holoscan SDK.
-Licensed under Apache-2.0 (https://github.com/dmlc/dlpack/blob/v1.3/LICENSE)
-Public headers include <dlpack/dlpack.h> from the SDK. This package does not redistribute DLPack source or binaries.
+== Incorporated into Holoscan Camera binaries ==
+
+nanobind (https://github.com/wjakob/nanobind)
+Copyright (c) 2022 Wenzel Jakob <wenzel.jakob@epfl.ch>, All rights reserved.
+Version 3.0.1 (pyproject.toml build requirement; the Holoscan SDK 5.0.0 build selects the same v3.0.1 tag).
+Licensed under BSD-3-Clause (https://github.com/wjakob/nanobind/blob/v3.0.1/LICENSE)
+The holoscan_camera Python extension modules (_camera, and _sipl and _argus where built) use NB_STATIC, so the nanobind runtime library is compiled into each of them. The full license text is reproduced below.
+
+tsl::robin_map (https://github.com/Tessil/robin-map)
+Copyright (c) 2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>
+Version 1.4.0, commit 4ec1bf19c6a96125ea22062f38c2cf5b958e448e: the ext/robin_map revision pinned by nanobind v3.0.1 and shipped in the nanobind 3.0.1 Python distribution.
+Licensed under MIT (https://github.com/Tessil/robin-map/blob/4ec1bf19c6a96125ea22062f38c2cf5b958e448e/LICENSE)
+The nanobind runtime includes these header-only containers, so they are compiled into the same Python extensions. The full license text is reproduced below.
+
+== Headers and generated code compiled against (provided by the SDK or system) ==
 
 FlatBuffers (https://github.com/google/flatbuffers)
 Copyright 2014 Google Inc. All rights reserved.
@@ -16,13 +27,107 @@ Version 25.12.19, as provided by Holoscan SDK.
 Licensed under Apache-2.0 (https://github.com/google/flatbuffers/blob/v25.12.19/LICENSE)
 The SDK flatc tool generates schema headers that this package installs. The FlatBuffers runtime is linked through the Holoscan SDK (holoscan::schema) and is not copied into this package.
 
+DLPack (https://github.com/dmlc/dlpack)
+Version 1.3, as provided by Holoscan SDK.
+Licensed under Apache-2.0 (https://github.com/dmlc/dlpack/blob/v1.3/LICENSE)
+Public headers include <dlpack/dlpack.h> from the SDK. This package does not redistribute DLPack source or binaries.
+
 Linux kernel UAPI header linux/videodev2.h (https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/videodev2.h)
 Copyright (C) 1999-2012 the contributors
 SPDX-License-Identifier: ((GPL-2.0+ WITH Linux-syscall-note) OR BSD-3-Clause)
 This module elects the BSD-3-Clause terms (https://opensource.org/license/BSD-3-Clause).
 V4l2CaptureOp compiles against the system header for Video4Linux ioctl calls. The header is not installed or otherwise redistributed.
 
+== Externally installed runtime dependencies (not redistributed) ==
+
+Holoscan SDK (https://github.com/nvidia-holoscan/holoscan-sdk)
+Version 5.0.0 (source tag v5.0.0; development image nvcr.io/nvidia/clara-holoscan/holoscan:v5.0.0-cuda13).
+Python wheel dependency: holoscan-core-cu13==5.0.0.
+Licensed under Apache-2.0 (https://github.com/nvidia-holoscan/holoscan-sdk/blob/v5.0.0/LICENSE.txt); third-party notices in NOTICE.txt (https://github.com/nvidia-holoscan/holoscan-sdk/blob/v5.0.0/NOTICE.txt).Camera links the SDK's shared libraries (holoscan::core, holoscan::sensor_io and their dependencies), which the user installs separately; the wheel declares holoscan-core-cu13==5.0.0 as a dependency. Camera does not copy SDK binaries.
+
+NVIDIA CUDA Toolkit and runtime (https://developer.nvidia.com/cuda-toolkit)
+Version 13 (the Holoscan SDK 5.0.0 image is based on nvcr.io/nvidia/cuda:13.0.0-base-ubuntu24.04).
+Governed by the NVIDIA CUDA Toolkit End User License Agreement (https://docs.nvidia.com/cuda/eula/index.html), which is distributed with the toolkit.
+Camera compiles against CUDA headers and links the CUDA runtime and driver API. Wheels and packages do not bundle the CUDA runtime or the GPU driver; they are supplied by the host or the SDK installation.
+
+Platform EGL (libglvnd: libegl-dev for development, libegl1 at runtime; https://gitlab.freedesktop.org/glvnd/libglvnd)
+Version provided by the Ubuntu 24.04 or Jetson Linux platform (not pinned by Camera).
+Licensed under MIT, with Khronos header terms as listed in /usr/share/doc/libegl-dev/copyright and /usr/share/doc/libegl1/copyright.
+ArgusCaptureOp compiles against <EGL/egl.h> and links the system libEGL for Argus/CUDA EGLImage buffer sharing. Camera does not redistribute EGL headers or libraries.
+
+NVIDIA Jetson Linux Argus and Multimedia API (Jetson Linux R39.2; packages nvidia-l4t-jetson-multimedia-api, nvidia-l4t-camera and nvidia-l4t-multimedia-utils from https://repo.download.nvidia.com/jetson/)
+Version 39.2.0, selected by the development image's L4T_VERSION; the exact package versions and SHA-256 digests are recorded in /usr/share/holoscan-camera/argus-build-packages.txt inside that image.
+Argus API headers: BSD-3-Clause, copyright NVIDIA CORPORATION (/usr/src/jetson_multimedia_api/argus/LICENSE.TXT). nvbufsurface.h and the libnvargus_socketclient and libnvbufsurface libraries: NVIDIA proprietary, governed by the NVIDIA Driver License Agreement in /usr/share/doc/<package>/copyright and the Tegra Software License Agreement (/usr/src/jetson_multimedia_api/Tegra_Software_License_Agreement-Tegra-Linux.txt).
+Development input: the image extracts these headers and link libraries to build ArgusCaptureOp. Runtime: libnvargus_socketclient and libnvbufsurface are loaded from the target device's Jetson Linux BSP. Camera wheels and packages do not bundle these headers or libraries.
+
+NVIDIA Jetson SIPL API (Jetson_SIPL_API_R39.2.0_aarch64.tbz2 from https://developer.nvidia.com/downloads/embedded/L4T/r39_Release_v2.0/release/)
+Version R39.2.0 (SIPL API v2), selected by the development image's L4T_VERSION.
+NVIDIA proprietary (SPDX LicenseRef-NvidiaProprietary in the headers), governed by the Tegra Software License Agreement shipped in the archive at /usr/share/doc/jetson_sipl_api/Tegra_Software_License_Agreement-Tegra-Linux.txt.
+Development input: SIPLCaptureOp compiles against the SIPL, NvSci and NvMedia headers under /usr/src/jetson_sipl_api. Runtime: libnvsipl, libnvsipl_query, libnvscibuf and libnvscisync are loaded from the target device's Jetson Linux BSP under the BSP's license terms. Camera wheels and packages do not bundle these headers or libraries.
+
+== Development-only tools (not distributed) ==
+
+Holoscan CLI (https://github.com/nvidia-holoscan/holoscan-cli)
+Version holoscan-cli[create]==5.0.0 (requirements-cli.txt, installed from PyPI and https://pypi.nvidia.com by the ./holoscan_camera wrapper and the development image).
+Licensed under Apache-2.0 (https://github.com/nvidia-holoscan/holoscan-cli/blob/v5.0.0/LICENSE); the create extra installs cookiecutter, jsonschema and referencing under their own licenses.
+Used only to build, test, run and package this module. It is not installed by the holoscan-camera package or wheel.
+
 GoogleTest (https://github.com/google/googletest)
 Copyright 2008, Google Inc. All rights reserved.
 Licensed under BSD-3-Clause (https://github.com/google/googletest/blob/v1.17.0/LICENSE)
 Used only to build and run unit tests (libgtest-dev). It is not installed by the holoscan-camera package. The development image does not pin the package version; the license link above is the Holoscan SDK's recorded GoogleTest license.
+
+== License texts for components incorporated into Holoscan Camera binaries ==
+
+---- nanobind 3.0.1 (BSD-3-Clause) ----
+
+Copyright (c) 2022 Wenzel Jakob <wenzel.jakob@epfl.ch>, All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+---- tsl::robin_map 1.4.0 (MIT) ----
+
+MIT License
+
+Copyright (c) 2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
